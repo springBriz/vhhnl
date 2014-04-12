@@ -70,7 +70,7 @@ echo "=============================="
 echo "= Nginx Config               ="
 echo "=============================="
 echo -e "${COLOR_NONE}"
-cat << EOF | sudo tee /etc/nginx/conf.d/laravel
+cat << EOF | sudo tee /etc/nginx/conf.d/laravel.conf
 server {
     listen 80 default_server;
 
@@ -90,12 +90,12 @@ server {
         access_log off;
     }
 
-    location ~ \.php$ {
+    location ~ \.(hh|php)$ {
         try_files \$uri @fastcgi;
         fastcgi_keep_conn on;
         fastcgi_pass   127.0.0.1:9000;
         fastcgi_index  index.php;
-        fastcgi_param  SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param  SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
         include        fastcgi_params;
     }
 
@@ -103,7 +103,7 @@ server {
         fastcgi_keep_conn on;
         fastcgi_pass   127.0.0.1:9000;
         fastcgi_index  index.php;
-        fastcgi_param  SCRIPT_FILENAME $document_root/index.php;
+        fastcgi_param  SCRIPT_FILENAME \$document_root/index.php;
         include        fastcgi_params;
     }
 
