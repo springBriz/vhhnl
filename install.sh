@@ -38,9 +38,11 @@ echo "=============================="
 echo "= PPA && Repositories        ="
 echo "=============================="
 echo -e "${COLOR_NONE}"
-sudo add-apt-repository -y ppa:nginx/stable
 sudo add-apt-repository -y ppa:mapnik/boost
+wget -O - http://nginx.org/keys/nginx_signing.key | sudo apt-key add -
 wget -O - http://dl.hhvm.com/conf/hhvm.gpg.key | sudo apt-key add -
+echo deb http://nginx.org/packages/ubuntu/ precise nginx | sudo tee /etc/apt/sources.list.d/nginx.list
+echo deb-src http://nginx.org/packages/ubuntu/ precise nginx | sudo tee -a /etc/apt/sources.list.d/nginx.list
 echo deb http://dl.hhvm.com/ubuntu precise main | sudo tee /etc/apt/sources.list.d/hhvm.list
 sudo apt-get update
 
@@ -59,7 +61,6 @@ echo "= Installing HHVM            ="
 echo "=============================="
 echo -e "${COLOR_NONE}"
 sudo apt-get install -y hhvm
-sudo /usr/share/hhvm/install_fastcgi.sh
 sudo /etc/init.d/hhvm restart
 sudo /usr/bin/update-alternatives --install /usr/bin/php php /usr/bin/hhvm 60
 
@@ -69,7 +70,7 @@ echo "=============================="
 echo "= Nginx Config               ="
 echo "=============================="
 echo -e "${COLOR_NONE}"
-cat << EOF | sudo tee -a /etc/nginx/sites-available/laravel
+cat << EOF | sudo tee /etc/nginx/conf.d/laravel
 server {
     listen 80 default_server;
 
@@ -84,7 +85,26 @@ server {
     charset utf-8;
 
     location / {
-        try_files \$uri \$uri/ /index.php?\$query_string;
+        rewrite ^/(.*)/$ /$1 redirect;
+        try_files \$uri @fastcgi;
+        access_log off;
+    }
+
+    location ~ \.php$ {
+        try_files \$uri @fastcgi;
+        fastcgi_keep_conn on;
+        fastcgi_pass   127.0.0.1:9000;
+        fastcgi_index  index.php;
+        fastcgi_param  SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include        fastcgi_params;
+    }
+
+    location @fastcgi {
+        fastcgi_keep_conn on;
+        fastcgi_pass   127.0.0.1:9000;
+        fastcgi_index  index.php;
+        fastcgi_param  SCRIPT_FILENAME $document_root/index.php;
+        include        fastcgi_params;
     }
 
     location = /favicon.ico { log_not_found off; access_log off; }
@@ -92,16 +112,13 @@ server {
 
     error_page 404 /index.php;
 
-    include hhvm.conf;  # The HHVM Magic Here
-
     # Deny .htaccess file access
     location ~ /\.ht {
         deny all;
     }
 }
 EOF
-sudo rm /etc/nginx/sites-enabled/default
-sudo ln -s /etc/nginx/sites-available/laravel /etc/nginx/sites-enabled/laravel
+sudo rm /etc/nginx/conf.d/default.conf
 sudo service nginx reload
 
 echo -e "${COLOR_COMMENT}"
