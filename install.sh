@@ -126,8 +126,13 @@ echo "=============================="
 echo "= Installing Composer        ="
 echo "=============================="
 echo -e "${COLOR_NONE}"
-curl -sS https://getcomposer.org/installer | php
+curl -o composer_installer -sS https://getcomposer.org/installer
+sudo hhvm -v ResourceLimit.SocketDefaultTimeout=30 -v Http.SlowQueryThreshold=30000 composer_installer
+rm -f composer_installer
 sudo mv composer.phar /usr/local/bin/composer
+cat << EOF | sudo tee -a ~/.profile
+alias composer="hhvm -v ResourceLimit.SocketDefaultTimeout=30 -v Http.SlowQueryThreshold=30000 -v Eval.Jit=false /usr/local/bin/composer"
+EOF
 
 echo -e "${COLOR_INFO}"
 echo "=============================="
