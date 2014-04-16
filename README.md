@@ -1,6 +1,9 @@
 ## Vagrant HHVM Hack Nginx Laravel
 
-#### FORKED - using Nginx repository from nginx.org (http://nginx.org/en/linux_packages.html)
+#### FORKED & MODIFIED
+- using Nginx repository from nginx.org (http://nginx.org/en/linux_packages.html)
+- fix SlowTimer error when downloading composer.phar
+- etc.
 
 #### Usage With Laravel
 1. Copy `Vagratfile` and `install.sh` into your Laravel root directory.
